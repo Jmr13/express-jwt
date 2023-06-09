@@ -1,3 +1,4 @@
+const dotenv = require('dotenv').config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -7,8 +8,6 @@ const path = require('path');
 const router = require("./routes");
 const AppError = require("./utils/appError");
 const errorHandler = require("./utils/errorHandler");
-
-const PORT = 3000;
 
 app.use(express.json());
 app.use(bodyParser.json());
@@ -22,8 +21,8 @@ app.all("*", (req, res, next) => {
   next(new AppError(`The URL ${req.originalUrl} does not exists`, 404));
 });
 
-app.listen(PORT, () => {
-  console.log(`server running on port ${PORT}`);
+app.listen(process.env.DB_PORT, () => {
+  console.log(`server running on port ${dotenv.DB_PORT}`);
 });
 
 module.exports = app;

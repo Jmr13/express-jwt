@@ -31,7 +31,7 @@ exports.registerUser = (req, res, next) => {
               return res.status(400).send({msg: err});
             }
             return res.status(201).send({
-              msg: 'This user is already registered'
+              msg: 'This user is finally registered'
             });
           });
         } 
