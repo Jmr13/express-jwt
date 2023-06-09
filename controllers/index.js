@@ -1,16 +1,18 @@
-const express = require('express');
-const router = express.Router();
-const db  = require('./dbConnection');
-const { signupValidation, loginValidation } = require('./validation');
-const { validationResult } = require('express-validator');
+const AppError = require("../utils/appError");
+const conn = require("../services/db");
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+/*
+const { signupValidation, loginValidation } = require('./validation');
+const { validationResult } = require('express-validator');
+*/
 
-router.post('/register', signupValidation, (req, res, next) => {
-  db.query(`SELECT * FROM users WHERE LOWER(email) = LOWER(${db.escape(req.body.email)});`, (err, result) => {
+exports.registerUser = (req, res, next) => {
+ conn.query(`SELECT * FROM users WHERE LOWER(email) = LOWER(?);`, [conn.escape(req.body.email)], (err, result) => {
     if (result.length) {
       return res.status(409).send({
-      msg: 'This user is already in use!'
+      msg: 'This user is already existing'
       });
     } 
     else {
@@ -23,23 +25,23 @@ router.post('/register', signupValidation, (req, res, next) => {
         } 
         else {
         // has hashed pw => add to database
-          db.query(`INSERT INTO users (name, email, password , last_login) VALUES ('${req.body.name}', ${db.escape(req.body.email)}, ${db.escape(hash)} , null)`, (err, result) => {
+          conn.query(`INSERT INTO users (name, email, password , last_login) VALUES ('${req.body.name}', ${conn.escape(req.body.email)}, ${conn.escape(hash)} , null)`, (err, result) => {
             if (err) {
               throw err;
               return res.status(400).send({msg: err});
             }
             return res.status(201).send({
-              msg: 'The user has been registerd with us!'
+              msg: 'This user is already registered'
             });
           });
         } 
       });
     }
   });
-});
+};
 
-router.post('/login', loginValidation, (req, res, next) => {
-  db.query(`SELECT * FROM users WHERE email = ${db.escape(req.body.email)};`, (err, result) => {
+exports.loginUser = (req, res, next) => {
+  conn.query(`SELECT * FROM users WHERE email = ${conn.escape(req.body.email)};`, (err, result) => {
   // user does not exists
   if (err) {
     throw err;
@@ -63,7 +65,7 @@ router.post('/login', loginValidation, (req, res, next) => {
       }
       if (bResult) {
         const token = jwt.sign({id:result[0].id},'the-super-strong-secrect',{ expiresIn: '1h' });
-        db.query(`UPDATE users SET last_login = now() WHERE id = '${result[0].id}'`);
+        conn.query(`UPDATE users SET last_login = now() WHERE id = '${result[0].id}'`);
         return res.status(200).send({
           msg: 'Logged in!',
           token,
@@ -75,9 +77,9 @@ router.post('/login', loginValidation, (req, res, next) => {
       });
     });
   });
-});
+}
 
-router.post('/get-user', signupValidation, (req, res, next) => {
+exports.getUser = (req, res, next) => {
   if(
     !req.headers.authorization ||
     !req.headers.authorization.startsWith('Bearer') ||
@@ -89,10 +91,8 @@ router.post('/get-user', signupValidation, (req, res, next) => {
   }
     const theToken = req.headers.authorization.split(' ')[1];
     const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
-    db.query('SELECT * FROM users where id=?', decoded.id, function (error, results, fields) {
+    conn.query('SELECT * FROM users where id=?', decoded.id, function (error, results, fields) {
     if (error) throw error;
-    return res.send({ error: false, data: results[0], message: 'Fetch Successfully.' });
+    return res.send({ data: results[0], message: 'Fetch Successfully.' });
   });
-});
-
-module.exports = router;
+}
