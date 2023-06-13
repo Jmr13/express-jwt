@@ -2,11 +2,13 @@ const express = require("express");
 const controllers = require("../controllers");
 const router = express.Router();
 
+const { signupValidation, loginValidation } = require("../middleware/validation");
+
 router.route("/register")
-  .post(controllers.registerUser);
+  .post(signupValidation , controllers.registerUser);
 
 router.route("/login")
-  .post(controllers.loginUser);
+  .post(loginValidation, controllers.loginUser);
   
 router.route("/get-user")
   .post(controllers.getUser);
