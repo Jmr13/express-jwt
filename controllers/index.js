@@ -3,6 +3,7 @@ const conn = require("../services/db");
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const { validationResult } = require('express-validator');
 
@@ -74,7 +75,7 @@ exports.loginUser = (req, res, next) => {
           });
         }
         if (bResult) {
-          const token = jwt.sign({id:result[0].id},'the-super-strong-secrect',{ expiresIn: '1h' });
+          const token = jwt.sign({id:result[0].id}, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '1h' });
           conn.query(`UPDATE users SET last_login = now() WHERE id = '${result[0].id}'`);
           return res.status(200).send({
             msg: 'Logged in!',
@@ -101,7 +102,7 @@ exports.getUser = (req, res, next) => {
     });
   }
     const theToken = req.headers.authorization.split(' ')[1];
-    const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
+    const decoded = jwt.verify(theToken, process.env.ACCESS_TOKEN_SECRET);
     conn.query('SELECT * FROM users where id=?', decoded.id, function (error, results, fields) {
     if (error) throw error;
     return res.send({ data: results[0], message: 'Fetch Successfully.' });
